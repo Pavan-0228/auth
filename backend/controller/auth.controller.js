@@ -15,10 +15,9 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
 
         return { accessToken, refreshToken };
     } catch (error) {
-        throw new Error(
-            500,
-            "Something went wrong while generating referesh and access token"
-        );
+        return res.status(500).json({
+            message: "Something went wrong while generating referesh and access token",
+        });
     }
 };
 
@@ -32,24 +31,21 @@ const registerUser = asyncHandler(async (req, res) => {
         !password?.trim() ||
         !username?.trim()
     ) {
-        res.status(400);
-        throw new Error("All fields are required");
+        return res.status(400).json({ message: "All fields are required" });
     }
 
     // Check if user already exists
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
 
     if (userExists) {
-        res.status(400);
-        throw new Error("User already exists");
+        return res.status(400).json({ message: "User already exists" });
     }
 
     // Create the new user
     const user = await User.create({ fullName, email, password, username });
 
     if (!user) {
-        res.status(400);
-        throw new Error("Invalid user data");
+        return res.status(400).json({ message: "User registration failed" });
     }
 
     // Remove sensitive fields before sending response
@@ -68,8 +64,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // Check if all fields are provided
     if ((!email && !username) || !password) {
-        res.status(400);
-        throw new Error("All fields are required");
+        return res.status(400).json({ message: "All fields are required" });
     }
 
     // Find user by email or username
@@ -77,14 +72,12 @@ const loginUser = asyncHandler(async (req, res) => {
     if (email) {
         user = await User.findOne({ email });
         if (!user) {
-            res.status(404);
-            throw new Error("Email not found");
+            return res.status(404).json({ message: "Email not found" });
         }
     } else if (username) {
         user = await User.findOne({ username });
         if (!user) {
-            res.status(404);
-            throw new Error("Username not found");
+            return res.status(404).json({ message: "Username not found" });
         }
     }
 
@@ -92,8 +85,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const isPasswordCorrect = await user.checkPassword(password);
 
     if (!isPasswordCorrect) {
-        res.status(401);
-        throw new Error("Invalid credentials");
+        return res.status(401).json({ message: "Invalid password" });
     }
 
     // Generate access token and refresh token
